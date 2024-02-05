@@ -3,15 +3,24 @@ import logger from "@/logger"
 
 import styles from './page.module.css'
 import Link from "next/link"
+import db from "../../prisma/db";
 
 async function getAllPosts (page) {
-  const response = await fetch(`http://localhost:3042/posts?_page=${page}&_per_page=6`)
-  if (!response.ok) {
-    logger.error('Ops, alguma coisa correu mal')
-    return []
+  try {
+
+    const prev = null;
+    const next = null;
+
+    const posts = await db.post.findMany();
+    return { data: posts, prev, next }
+
+  } catch (error) {
+    
+    logger.error('Ops, alguma coisa correu mal', {
+      error
+    });
+    return { data: [], prev: null, next: null }
   }
-  logger.info('Posts obtidos com sucesso')
-  return response.json()
 }
 
 export default async function Home({ searchParams }) {
