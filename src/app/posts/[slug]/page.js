@@ -4,31 +4,30 @@ import html from 'remark-html';
 
 import styles from './page.module.css'
 import { CardPost } from "@/components/CardPost";
+import db from "../../../../prisma/db";
 
 
 async function getPostBySlug(slug) {
-    const url = `http://localhost:3042/posts?slug=${slug}`
-    const response = await fetch(url)
-    if (!response.ok) {
-        logger.error('Ops, alguma coisa correu mal')
-        return {}
+    try {
+
+        const post = await db.post.findFirst({
+            where: { slug },
+            include: { author: true }
+        });
+        
+        const processedContent = await remark()
+            .use(html)
+            .process(post.markdown);
+
+        const contentHtml = processedContent.toString();
+
+        post.markdown = contentHtml
+
+        return post;
+    } catch (error) {
+        logger.error('Ops, alguma coisa correu mal', error);
+        return { author: {}, markdown: '' }
     }
-    logger.info('Posts obtidos com sucesso')
-    const data = await response.json()
-    if (data.length == 0) {
-        return {}
-    }
-
-    const post = data[0];
-
-    const processedContent = await remark()
-        .use(html)
-        .process(post.markdown);
-    const contentHtml = processedContent.toString();
-
-    post.markdown = contentHtml
-
-    return post
 }
 
 const PagePost = async ({ params }) => {
