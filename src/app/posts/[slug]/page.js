@@ -5,6 +5,7 @@ import html from 'remark-html';
 import styles from './page.module.css'
 import { CardPost } from "@/components/CardPost";
 import db from "../../../../prisma/db";
+import { redirect } from "next/navigation";
 
 
 async function getPostBySlug(slug) {
@@ -14,6 +15,10 @@ async function getPostBySlug(slug) {
             where: { slug },
             include: { author: true }
         });
+
+        if (!post) {
+            throw new Error('Post not found')
+        }
         
         const processedContent = await remark()
             .use(html)
@@ -26,8 +31,8 @@ async function getPostBySlug(slug) {
         return post;
     } catch (error) {
         logger.error('Ops, alguma coisa correu mal', error);
-        return { author: {}, markdown: '' }
     }
+    redirect('/not-found')
 }
 
 const PagePost = async ({ params }) => {
